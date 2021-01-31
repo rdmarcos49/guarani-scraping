@@ -1,0 +1,23 @@
+{
+  "name": "guarani-scraping",
+  "version": "1.0.0",
+  "description": "The webscraping app of our proyect.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rdmarcos49/guarani-scraping.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rdmarcos49/guarani-scraping/issues"
+  },
+  "homepage": "https://github.com/rdmarcos49/guarani-scraping#readme",
+  "dependencies": {
+    "puppeteer": "^5.5.0"
+  }
+}
