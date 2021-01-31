@@ -1,4 +1,10 @@
 const puppeteer = require('puppeteer');
+const fs = require('fs');
+
+const dir = './screenshots';
+if (!fs.existsSync(dir)){
+    fs.mkdirSync(dir);
+}
 
 function getObjetoDeInformacionDeLaMesa(cabecera, tr1) {
   let informacionDeLaMesa = {}
@@ -65,7 +71,7 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
   });
 
   await page.goto(URL, {waitUntil: 'networkidle0'});
-  await page.screenshot({path: 'initOfPage.png'})
+  await page.screenshot({path: 'screenshots/initOfPage.png'})
   await page.exposeFunction("getIngSistValue", getIngSistValue);
   const career = await page.evaluate((getIngSistValue) => {
     const options = document.querySelectorAll('#formulario_filtro-carrera option');
@@ -73,7 +79,7 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
     return ingSistValue;
   })
   await page.select('#formulario_filtro-carrera', career);
-  await page.screenshot({path: 'selectedCareer.png'})
+  await page.screenshot({path: 'screenshots/selectedCareer.png'})
 
   /*
   const plan = await page.evaluate(() => {
@@ -82,13 +88,13 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
     return plan2011Value;
   });
   await page.select('#formulario_filtro-plan', plan);
-  await page.screenshot({path: 'selecterPlan.png'})
+  await page.screenshot({path: 'screenshots/selecterPlan.png'})
 
   await pageEvaluate(() => {
     const button = document.getElementById('boton_buscar');
     button.click();
   })
-  await page.screenshot({path: 'searchResult.png'})
+  await page.screenshot({path: 'screenshots/searchResult.png'})
 
   */
   

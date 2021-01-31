@@ -102,3 +102,7 @@ dist
 
 # TernJS port file
 .tern-port
+
+# the folder with the dynamic screenshots
+screenshots
+screenshots/*
