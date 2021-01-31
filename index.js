@@ -75,7 +75,7 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
   await page.exposeFunction("getIngSistValue", getIngSistValue);
   const career = await page.evaluate((getIngSistValue) => {
     const options = document.querySelectorAll('#formulario_filtro-carrera option');
-    const ingSistValue = getIngSistValue(options);
+    const ingSistValue = window.getIngSistValue(options);
     return ingSistValue;
   })
   await page.select('#formulario_filtro-carrera', career);
