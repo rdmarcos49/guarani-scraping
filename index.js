@@ -39,7 +39,7 @@ function getIngSistValue(options) {
   for (let i = 0; i < options.length; i++) {
     const option = options[i];
     const actualOptionText = option.innerText;
-    if (theInnerTextIncludesSomeOfThisWords(actualOptionText, ...CAREER_WORDS)) {
+    if (window.theInnerTextIncludesSomeOfThisWords(actualOptionText, ...CAREER_WORDS)) {
       target = option.value;
     }
   }
@@ -72,6 +72,7 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
   await page.goto(URL, {waitUntil: 'networkidle0'});
   await page.screenshot({path: 'screenshots/initOfPage.png'})
   await page.exposeFunction("getIngSistValue", getIngSistValue);
+  await page.exposeFunction("theInnerTextIncludesSomeOfThisWords", theInnerTextIncludesSomeOfThisWords);
   const career = await page.evaluate(() => {
     const options = document.querySelectorAll('#formulario_filtro-carrera option');
     const ingSistValue = window.getIngSistValue(options);
