@@ -22,25 +22,24 @@ function getInfoCompleta(infoPrincipal, infoVerMas) {
     return infoCompleta;
 }
 
-function theInnerTextIncludesSomeOfThisWords(array, ...words) {
-  const lowerCaseArray = array.map(word => word.toLowerCase());
+function theInnerTextIncludesSomeOfThisWords(innerTextOption, ...words) {
+  const lowerCaseInnerTextOption = innerTextOption.toLowerCase();
   const lowerCaseWords = words.map(word => word.toLowerCase());
-  let theArrayIncludeSomeOfTheParameterWords = false;
   for (const word of lowerCaseWords) {
-    if (lowerCaseArray.includes(word)) {
-      theArrayIncludeSomeOfTheParameterWords = true;
-      break;
+    if (lowerCaseInnerTextOption.includes(word)) {
+      return true;
     }
   }
-  return theArrayIncludeSomeOfTheParameterWords;
+  return false;
 }
 
 function getIngSistValue(options) {
   const CAREER_WORDS = ['ingenieria', 'ingeniería'];
   let target = null;
-  for (const option of options) {
-    const actualOptionWords = option.innerText;
-    if (theInnerTextIncludesSomeOfThisWords(actualOptionWords, ...CAREER_WORDS)) {
+  for (let i = 0; i < options.length; i++) {
+    const option = options[i];
+    const actualOptionText = option.innerText;
+    if (window.theInnerTextIncludesSomeOfThisWords(actualOptionText, ...CAREER_WORDS)) {
       target = option.value;
     }
   }
@@ -62,7 +61,7 @@ function getPlan2011(options) {
 const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
 
 (async () => {
-  const browser = await puppeteer.launch({ headless: false });
+  const browser = await puppeteer.launch();
   const page = await browser.newPage();
 
   await page.setViewport({
@@ -73,11 +72,13 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
   await page.goto(URL, {waitUntil: 'networkidle0'});
   await page.screenshot({path: 'screenshots/initOfPage.png'})
   await page.exposeFunction("getIngSistValue", getIngSistValue);
-  const career = await page.evaluate((getIngSistValue) => {
+  await page.exposeFunction("theInnerTextIncludesSomeOfThisWords", theInnerTextIncludesSomeOfThisWords);
+  const career = await page.evaluate(() => {
     const options = document.querySelectorAll('#formulario_filtro-carrera option');
     const ingSistValue = window.getIngSistValue(options);
     return ingSistValue;
   })
+  console.log(career);
   await page.select('#formulario_filtro-carrera', career);
   await page.screenshot({path: 'screenshots/selectedCareer.png'})
 
