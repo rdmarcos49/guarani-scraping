@@ -6,16 +6,18 @@ if (!fs.existsSync(dir)){
     fs.mkdirSync(dir);
 }
 
-function getObjetoDeInformacionDeLaMesa(cabecera, tri) {
-  console.log(cabecera)
-  console.log(tri)
+function getObjetoDeInformacionDeLaMesa(cabecera, td) {
   let informacionDeLaMesa = {}
   for (let i = 0; i < cabecera.length; i++) {
+    const key = cabecera[i];
+    const value = td[i]
     informacionDeLaMesa = {
       ...informacionDeLaMesa,
-      [cabecera[i]]: tri[i].innerText,
+      [key]: value,
     }
   }
+  console.log("INFO DEL MESA")
+  console.log(informacionDeLaMesa)
   return informacionDeLaMesa;
 }
 
@@ -119,20 +121,48 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
       const principalHeaders = [...nodeListPrincipalHeaders.querySelectorAll('th')].map(header => header.innerText);
       const nodeListVerMasHeaders = subject.querySelectorAll('table tbody .mas_info')[0];
       const verMasHeaders = [...nodeListVerMasHeaders.querySelectorAll('table thead tr th')].map(header => header.innerText);
-      const theSixTr = [...subject.querySelectorAll('table tbody tr')];
+      const body = [...subject.querySelector('table tbody').childNodes];
+
       let mesas = []
-      mesas.push(principalHeaders);
-      mesas.push(verMasHeaders);
-      /*
-      for (let i = 0; i < theSixTr.length; i += 2) {
-        page.waitFor(100000000000)
+      for (let i = 0; i < body.length; i = i + 2) {
+        const principalData = [...body[i].querySelectorAll('td')].map(elem => elem.innerText);
+        
+        const verMasData = [...body[i + 1].querySelector('td table tbody tr').childNodes].map(elem => {
+          return elem.innerText.split('\t').join('').split('\n').join('');
+        });
+
+        // #######################################################################################################
+        // Aca no me devuelve bien los valores
+        // Dentro de la funcion "getObjetoDeInformacionDeLaMesa" hace todo bien y arma un objeto bonito,
+        // pero en "a" y "b" no lo trae.
+        
+        const a = window.getObjetoDeInformacionDeLaMesa(principalHeaders, principalData);
+        const b = window.getObjetoDeInformacionDeLaMesa(verMasHeaders, verMasData);
+
+        // Si te fijas en chromium, te va a decir que devuelve una promesa
+
+        console.log(a);
+        console.log(b);
+
+        // Luego si usas la siguiente sintaxis, deberia esperar, resolver la promesa y devolver bien el valor.
+        // Pero no lo hace.
+        // const a = window.getObjetoDeInformacionDeLaMesa(principalHeaders, principalData).then(value => value);
+        // const b = window.getObjetoDeInformacionDeLaMesa(verMasHeaders, verMasData).then(value => value);
+
+        // Te dejo como tarea chequear que onda por que no trae los valores, y si podes, fixearlo.
+        // Tkm atte: el rober
+
+        mesas.push({
+          infoPrincipal: a,
+          infoVerMas: b,
+        })
       }
-      */
-      return mesas
+      return {mesa: subjectName, llamados: mesas};
     });
     return clusterOfSubjects;
   });
-  console.log(data);
+  console.log(data)
+  fs.writeFileSync('result.json', JSON.stringify(data))
   await browser.close();
 
 })();
