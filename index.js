@@ -6,12 +6,14 @@ if (!fs.existsSync(dir)){
     fs.mkdirSync(dir);
 }
 
-function getObjetoDeInformacionDeLaMesa(cabecera, tr1) {
+function getObjetoDeInformacionDeLaMesa(cabecera, tri) {
+  console.log(cabecera)
+  console.log(tri)
   let informacionDeLaMesa = {}
   for (let i = 0; i < cabecera.length; i++) {
     informacionDeLaMesa = {
       ...informacionDeLaMesa,
-      [cabecera[i]]: tr1[i],
+      [cabecera[i]]: tri[i].innerText,
     }
   }
   return informacionDeLaMesa;
@@ -23,7 +25,6 @@ function getInfoCompleta(infoPrincipal, infoVerMas) {
 }
 
 function theInnerTextIncludesSomeOfThisWords(innerTextOption, ...words) {
-
   const lowerCaseInnerTextOption = innerTextOption.toLowerCase();
   const lowerCaseWords = words.map(word => word.toLowerCase());
   for (const word of lowerCaseWords) {
@@ -103,11 +104,35 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
   await page.evaluate(() => {
     const button = document.getElementById('boton_buscar');
     button.click();
-  })
+  });
   await page.waitForSelector('.corte')
   await page.screenshot({path: 'screenshots/searchResult.png'})
 
+  await page.exposeFunction('getObjetoDeInformacionDeLaMesa', getObjetoDeInformacionDeLaMesa);
+  await page.exposeFunction('getInfoCompleta', getInfoCompleta);
+
+
+  const data = await page.evaluate(() => {
+    let clusterOfSubjects = [...document.querySelectorAll('.corte')].map(subject => {
+      const subjectName = subject.querySelectorAll('.span12')[0].innerText;
+      const nodeListPrincipalHeaders = subject.querySelectorAll('table thead tr')[0];
+      const principalHeaders = [...nodeListPrincipalHeaders.querySelectorAll('th')].map(header => header.innerText);
+      const nodeListVerMasHeaders = subject.querySelectorAll('table tbody .mas_info')[0];
+      const verMasHeaders = [...nodeListVerMasHeaders.querySelectorAll('table thead tr th')].map(header => header.innerText);
+      const theSixTr = [...subject.querySelectorAll('table tbody tr')];
+      let mesas = []
+      mesas.push(principalHeaders);
+      mesas.push(verMasHeaders);
+      /*
+      for (let i = 0; i < theSixTr.length; i += 2) {
+        page.waitFor(100000000000)
+      }
+      */
+      return mesas
+    });
+    return clusterOfSubjects;
+  });
+  console.log(data);
   await browser.close();
 
-  
 })();
