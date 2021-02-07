@@ -127,45 +127,23 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
         const verMasData = [...body[i + 1].querySelector('td table tbody tr').childNodes].map(elem => {
           return elem.innerText.split('\t').join('').split('\n').join('');
         });
-
-        // #######################################################################################################
-        // Aca no me devuelve bien los valores
-        // Dentro de la funcion "getObjetoDeInformacionDeLaMesa" hace todo bien y arma un objeto bonito,
-        // pero en "a" y "b" no lo trae.
         
-        //const a = await window.getObjetoDeInformacionDeLaMesa(principalHeaders, principalData);
-        //const b = await window.getObjetoDeInformacionDeLaMesa(verMasHeaders, verMasData);
-        
-        let arr = await Promise.all(
-          [ window.getObjetoDeInformacionDeLaMesa(principalHeaders, principalData),
-            window.getObjetoDeInformacionDeLaMesa(verMasHeaders, verMasData)])
+        const splittedInformation = await Promise.all([
+          window.getObjetoDeInformacionDeLaMesa(principalHeaders, principalData),
+          window.getObjetoDeInformacionDeLaMesa(verMasHeaders, verMasData)
+        ]);
 
+        const unifiedInfo = await window.getInfoCompleta(splittedInformation[0], splittedInformation[1])
 
-        // Si te fijas en chromium, te va a decir que devuelve una promesa
-        //console.log(a);
-        //console.log(b);
-
-        // Luego si usas la siguiente sintaxis, deberia esperar, resolver la promesa y devolver bien el valor.
-        // Pero no lo hace.
-        // const a = window.getObjetoDeInformacionDeLaMesa(principalHeaders, principalData).then(value => value);
-        // const b = window.getObjetoDeInformacionDeLaMesa(verMasHeaders, verMasData).then(value => value);
-
-        // Te dejo como tarea chequear que onda por que no trae los valores, y si podes, fixearlo.
-        // Tkm atte: el rober
-
-        mesas.push({
-          infoPrincipal: arr[0],
-          infoVerMas: arr[1],
-        })
+        mesas.push(unifiedInfo)
       }
-      return {mesa: subjectName, llamados: mesas};
+      return {materia: subjectName, mesas: mesas};
     });
 
-    
     return await Promise.all(clusterOfSubjects);
   });
 
   console.log(data)
-  fs.writeFileSync('result.json', JSON.stringify(data))
-
+  fs.writeFileSync('result.json', JSON.stringify(data, null, 2));
+  await browser.close();
 })();
