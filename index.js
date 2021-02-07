@@ -137,14 +137,13 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
 
         mesas.push(unifiedInfo)
       }
-      return {mesa: subjectName, llamados: mesas};
+      return {materia: subjectName, mesas: mesas};
     });
 
-    
     return await Promise.all(clusterOfSubjects);
   });
 
   console.log(data)
-  fs.writeFileSync('result.json', JSON.stringify(data))
-
+  fs.writeFileSync('result.json', JSON.stringify(data, null, 2));
+  await browser.close();
 })();
