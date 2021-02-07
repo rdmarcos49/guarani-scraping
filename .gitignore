@@ -108,4 +108,5 @@ screenshots
 screenshots/*
 
 # temporaly, the .json result
-result.json
+scraping-result
+scraping-result/*
