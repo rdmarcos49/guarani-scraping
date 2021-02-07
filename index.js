@@ -16,8 +16,7 @@ function getObjetoDeInformacionDeLaMesa(cabecera, td) {
       [key]: value,
     }
   }
-  console.log("INFO DEL MESA")
-  console.log(informacionDeLaMesa)
+
   return informacionDeLaMesa;
 }
 
@@ -84,7 +83,6 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
     const ingSistValue = window.getIngSistValue(options);
     return ingSistValue;
   })
-  console.log(career);
   await page.select('#formulario_filtro-carrera', career);
   await page.screenshot({path: 'screenshots/selectedCareer.png'})
   await page.exposeFunction('getPlan2011', getPlan2011);
@@ -99,7 +97,6 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
     const plan2011Value = window.getPlan2011(options);
     return plan2011Value;
   });
-  console.log(plan);
   await page.select('#formulario_filtro-plan', plan);
   await page.screenshot({path: 'screenshots/selecterPlan.png'})
 
@@ -114,8 +111,8 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
   await page.exposeFunction('getInfoCompleta', getInfoCompleta);
 
 
-  const data = await page.evaluate(() => {
-    let clusterOfSubjects = [...document.querySelectorAll('.corte')].map(subject => {
+  const data = await page.evaluate(async () => {
+    let clusterOfSubjects = [...document.querySelectorAll('.corte')].map( async (subject) => {
       const subjectName = subject.querySelectorAll('.span12')[0].innerText;
       const nodeListPrincipalHeaders = subject.querySelectorAll('table thead tr')[0];
       const principalHeaders = [...nodeListPrincipalHeaders.querySelectorAll('th')].map(header => header.innerText);
@@ -136,13 +133,17 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
         // Dentro de la funcion "getObjetoDeInformacionDeLaMesa" hace todo bien y arma un objeto bonito,
         // pero en "a" y "b" no lo trae.
         
-        const a = window.getObjetoDeInformacionDeLaMesa(principalHeaders, principalData);
-        const b = window.getObjetoDeInformacionDeLaMesa(verMasHeaders, verMasData);
+        //const a = await window.getObjetoDeInformacionDeLaMesa(principalHeaders, principalData);
+        //const b = await window.getObjetoDeInformacionDeLaMesa(verMasHeaders, verMasData);
+        
+        let arr = await Promise.all(
+          [ window.getObjetoDeInformacionDeLaMesa(principalHeaders, principalData),
+            window.getObjetoDeInformacionDeLaMesa(verMasHeaders, verMasData)])
+
 
         // Si te fijas en chromium, te va a decir que devuelve una promesa
-
-        console.log(a);
-        console.log(b);
+        //console.log(a);
+        //console.log(b);
 
         // Luego si usas la siguiente sintaxis, deberia esperar, resolver la promesa y devolver bien el valor.
         // Pero no lo hace.
@@ -153,16 +154,18 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
         // Tkm atte: el rober
 
         mesas.push({
-          infoPrincipal: a,
-          infoVerMas: b,
+          infoPrincipal: arr[0],
+          infoVerMas: arr[1],
         })
       }
       return {mesa: subjectName, llamados: mesas};
     });
-    return clusterOfSubjects;
+
+    
+    return await Promise.all(clusterOfSubjects);
   });
+
   console.log(data)
   fs.writeFileSync('result.json', JSON.stringify(data))
-  await browser.close();
 
 })();
