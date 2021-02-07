@@ -128,14 +128,14 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
           return elem.innerText.split('\t').join('').split('\n').join('');
         });
         
-        let arr = await Promise.all(
-          [ window.getObjetoDeInformacionDeLaMesa(principalHeaders, principalData),
-            window.getObjetoDeInformacionDeLaMesa(verMasHeaders, verMasData)])
+        const splittedInformation = await Promise.all([
+          window.getObjetoDeInformacionDeLaMesa(principalHeaders, principalData),
+          window.getObjetoDeInformacionDeLaMesa(verMasHeaders, verMasData)
+        ]);
 
-        mesas.push({
-          infoPrincipal: arr[0],
-          infoVerMas: arr[1],
-        })
+        const unifiedInfo = await window.getInfoCompleta(splittedInformation[0], splittedInformation[1])
+
+        mesas.push(unifiedInfo)
       }
       return {mesa: subjectName, llamados: mesas};
     });
