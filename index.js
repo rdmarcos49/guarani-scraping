@@ -1,14 +1,9 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 
-const screenshotsDir = './screenshots';
-if (!fs.existsSync(screenshotsDir)){
-    fs.mkdirSync(screenshotsDir);
-}
-
-const jsonDir = './scraping-result';
-if (!fs.existsSync(jsonDir)){
-    fs.mkdirSync(jsonDir);
+const dir = './screenshots';
+if (!fs.existsSync(dir)){
+    fs.mkdirSync(dir);
 }
 
 function getObjetoDeInformacionDeLaMesa(cabecera, td) {
@@ -75,7 +70,7 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
   });
 
   await page.goto(URL, {waitUntil: 'networkidle0'});
-  await page.screenshot({path: `${screenshotsDir}/initOfPage.png`})
+  await page.screenshot({path: 'screenshots/initOfPage.png'})
   await page.exposeFunction('getIngSistValue', getIngSistValue);
   
   const career = await page.evaluate(() => {
@@ -88,9 +83,8 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
     const ingSistValue = window.getIngSistValue(options);
     return ingSistValue;
   })
-
   await page.select('#formulario_filtro-carrera', career);
-  await page.screenshot({path: `${screenshotsDir}/selectedCareer.png`})
+  await page.screenshot({path: 'screenshots/selectedCareer.png'})
   await page.exposeFunction('getPlan2011', getPlan2011);
   
   const plan = await page.evaluate(() => {
@@ -104,21 +98,18 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
     return plan2011Value;
   });
   await page.select('#formulario_filtro-plan', plan);
-  await page.screenshot({path: `${screenshotsDir}/selecterPlan.png`})
+  await page.screenshot({path: 'screenshots/selecterPlan.png'})
 
   await page.evaluate(() => {
     const button = document.getElementById('boton_buscar');
     button.click();
   });
   await page.waitForSelector('.corte')
-  await page.screenshot({path: `${screenshotsDir}/searchResult.png`})
+  await page.screenshot({path: 'screenshots/searchResult.png'})
 
   await page.exposeFunction('getObjetoDeInformacionDeLaMesa', getObjetoDeInformacionDeLaMesa);
   await page.exposeFunction('getInfoCompleta', getInfoCompleta);
 
-
-  const careerName = 'IngenieriaEnSistemas';
-  const planName = '2011';
 
   const data = await page.evaluate(async () => {
     let clusterOfSubjects = [...document.querySelectorAll('.corte')].map( async (subject) => {
@@ -136,23 +127,44 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
         const verMasData = [...body[i + 1].querySelector('td table tbody tr').childNodes].map(elem => {
           return elem.innerText.split('\t').join('').split('\n').join('');
         });
+
+        // #######################################################################################################
+        // Aca no me devuelve bien los valores
+        // Dentro de la funcion "getObjetoDeInformacionDeLaMesa" hace todo bien y arma un objeto bonito,
+        // pero en "a" y "b" no lo trae.
         
-        const splittedInformation = await Promise.all([
-          window.getObjetoDeInformacionDeLaMesa(principalHeaders, principalData),
-          window.getObjetoDeInformacionDeLaMesa(verMasHeaders, verMasData)
-        ]);
+        //const a = await window.getObjetoDeInformacionDeLaMesa(principalHeaders, principalData);
+        //const b = await window.getObjetoDeInformacionDeLaMesa(verMasHeaders, verMasData);
+        
+        let arr = await Promise.all(
+          [ window.getObjetoDeInformacionDeLaMesa(principalHeaders, principalData),
+            window.getObjetoDeInformacionDeLaMesa(verMasHeaders, verMasData)])
 
-        const unifiedInfo = await window.getInfoCompleta(splittedInformation[0], splittedInformation[1])
+        // Si te fijas en chromium, te va a decir que devuelve una promesa
+        //console.log(a);
+        //console.log(b);
 
-        mesas.push(unifiedInfo)
+        // Luego si usas la siguiente sintaxis, deberia esperar, resolver la promesa y devolver bien el valor.
+        // Pero no lo hace.
+        // const a = window.getObjetoDeInformacionDeLaMesa(principalHeaders, principalData).then(value => value);
+        // const b = window.getObjetoDeInformacionDeLaMesa(verMasHeaders, verMasData).then(value => value);
+
+        // Te dejo como tarea chequear que onda por que no trae los valores, y si podes, fixearlo.
+        // Tkm atte: el rober
+
+        mesas.push({
+          infoPrincipal: arr[0],
+          infoVerMas: arr[1],
+        })
       }
-      return {materia: subjectName, mesas: mesas};
+      return {mesa: subjectName, llamados: mesas};
     });
 
+    
     return await Promise.all(clusterOfSubjects);
   });
 
   console.log(data)
-  fs.writeFileSync(`${jsonDir}/${careerName}-${planName}.json`, JSON.stringify(data, null, 2));
-  await browser.close();
+  fs.writeFileSync('result.json', JSON.stringify(data))
+
 })();
