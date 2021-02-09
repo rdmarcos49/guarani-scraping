@@ -1,14 +1,14 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 
-const screenshotsDir = './screenshots';
-if (!fs.existsSync(screenshotsDir)){
-    fs.mkdirSync(screenshotsDir);
+const dir = './screenshots';
+if (!fs.existsSync(dir)){
+    fs.mkdirSync(dir);
 }
 
-const jsonDir = './scraping-result';
-if (!fs.existsSync(jsonDir)){
-    fs.mkdirSync(jsonDir);
+const resultDir = './scraping-result';
+if (!fs.existsSync(resultDir)){
+    fs.mkdirSync(resultDir);
 }
 
 function getObjetoDeInformacionDeLaMesa(cabecera, td) {
@@ -75,8 +75,10 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
   });
 
   await page.goto(URL, {waitUntil: 'networkidle0'});
-  await page.screenshot({path: `${screenshotsDir}/initOfPage.png`})
+  await page.screenshot({path: 'screenshots/initOfPage.png'})
   await page.exposeFunction('getIngSistValue', getIngSistValue);
+  await page.exposeFunction('getObjetoDeInformacionDeLaMesa', getObjetoDeInformacionDeLaMesa);
+  await page.exposeFunction('getInfoCompleta', getInfoCompleta);
   
   const career = await page.evaluate(() => {
     const options = [...document.querySelectorAll('#formulario_filtro-carrera option')].map(option => {
@@ -88,71 +90,80 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
     const ingSistValue = window.getIngSistValue(options);
     return ingSistValue;
   })
-
   await page.select('#formulario_filtro-carrera', career);
-  await page.screenshot({path: `${screenshotsDir}/selectedCareer.png`})
+  await page.screenshot({path: 'screenshots/selectedCareer.png'})
   await page.exposeFunction('getPlan2011', getPlan2011);
   
-  const plan = await page.evaluate(() => {
+  const planes = await page.evaluate(() => {
     const options = [...document.querySelectorAll('#formulario_filtro-plan option')].map(option => {
       return {
           innerText: option.innerText,
           value: option.value
         }
     })
-    const plan2011Value = window.getPlan2011(options);
-    return plan2011Value;
-  });
-  await page.select('#formulario_filtro-plan', plan);
-  await page.screenshot({path: `${screenshotsDir}/selecterPlan.png`})
-
-  await page.evaluate(() => {
-    const button = document.getElementById('boton_buscar');
-    button.click();
-  });
-  await page.waitForSelector('.corte')
-  await page.screenshot({path: `${screenshotsDir}/searchResult.png`})
-
-  await page.exposeFunction('getObjetoDeInformacionDeLaMesa', getObjetoDeInformacionDeLaMesa);
-  await page.exposeFunction('getInfoCompleta', getInfoCompleta);
-
-
-  const careerName = 'IngenieriaEnSistemas';
-  const planName = '2011';
-
-  const data = await page.evaluate(async () => {
-    let clusterOfSubjects = [...document.querySelectorAll('.corte')].map( async (subject) => {
-      const subjectName = subject.querySelectorAll('.span12')[0].innerText;
-      const nodeListPrincipalHeaders = subject.querySelectorAll('table thead tr')[0];
-      const principalHeaders = [...nodeListPrincipalHeaders.querySelectorAll('th')].map(header => header.innerText);
-      const nodeListVerMasHeaders = subject.querySelectorAll('table tbody .mas_info')[0];
-      const verMasHeaders = [...nodeListVerMasHeaders.querySelectorAll('table thead tr th')].map(header => header.innerText);
-      const body = [...subject.querySelector('table tbody').childNodes];
-
-      let mesas = []
-      for (let i = 0; i < body.length; i = i + 2) {
-        const principalData = [...body[i].querySelectorAll('td')].map(elem => elem.innerText);
-        
-        const verMasData = [...body[i + 1].querySelector('td table tbody tr').childNodes].map(elem => {
-          return elem.innerText.split('\t').join('').split('\n').join('');
-        });
-        
-        const splittedInformation = await Promise.all([
-          window.getObjetoDeInformacionDeLaMesa(principalHeaders, principalData),
-          window.getObjetoDeInformacionDeLaMesa(verMasHeaders, verMasData)
-        ]);
-
-        const unifiedInfo = await window.getInfoCompleta(splittedInformation[0], splittedInformation[1])
-
-        mesas.push(unifiedInfo)
+    // const plan2011Value = window.getPlan2011(options);
+    let filteredOptions = [];
+    options.forEach(option => {
+      if (!!option.value) {
+        filteredOptions.push(option);
       }
-      return {materia: subjectName, mesas: mesas};
-    });
-
-    return await Promise.all(clusterOfSubjects);
+    })
+    return filteredOptions;
   });
 
-  console.log(data)
-  fs.writeFileSync(`${jsonDir}/${careerName}-${planName}.json`, JSON.stringify(data, null, 2));
+
+  let informationToWrite = []
+  for (const plan of planes) {
+    await page.goto(URL, {waitUntil: 'networkidle0'});
+    await page.select('#formulario_filtro-carrera', career);
+    await page.waitForTimeout(1000)
+    await page.select('#formulario_filtro-plan', plan.value);
+    await page.screenshot({path: 'screenshots/selecterPlan.png'})
+
+    await page.evaluate(() => {
+      const button = document.getElementById('boton_buscar');
+      button.click();
+    });
+    await page.waitForSelector('.corte')
+    await page.screenshot({path: 'screenshots/searchResult.png'})
+
+    const data = await page.evaluate(async () => {
+      let clusterOfSubjects = [...document.querySelectorAll('.corte')].map( async (subject) => {
+        const subjectName = subject.querySelectorAll('.span12')[0].innerText;
+        const nodeListPrincipalHeaders = subject.querySelectorAll('table thead tr')[0];
+        const principalHeaders = [...nodeListPrincipalHeaders.querySelectorAll('th')].map(header => header.innerText);
+        const nodeListVerMasHeaders = subject.querySelectorAll('table tbody .mas_info')[0];
+        const verMasHeaders = [...nodeListVerMasHeaders.querySelectorAll('table thead tr th')].map(header => header.innerText);
+        const body = [...subject.querySelector('table tbody').childNodes];
+
+        let mesas = []
+        for (let i = 0; i < body.length; i = i + 2) {
+          const principalData = [...body[i].querySelectorAll('td')].map(elem => elem.innerText);
+          
+          const verMasData = [...body[i + 1].querySelector('td table tbody tr').childNodes].map(elem => {
+            return elem.innerText.split('\t').join('').split('\n').join('');
+          });
+          
+          const splittedInformation = await Promise.all([
+            window.getObjetoDeInformacionDeLaMesa(principalHeaders, principalData),
+            window.getObjetoDeInformacionDeLaMesa(verMasHeaders, verMasData)
+          ]);
+
+          const unifiedInfo = await window.getInfoCompleta(splittedInformation[0], splittedInformation[1])
+
+          mesas.push(unifiedInfo)
+        }
+        return {materia: subjectName, mesas: mesas};
+      });
+
+      return await Promise.all(clusterOfSubjects);
+    });
+    informationToWrite.push({plan: plan.innerText, data:data});
+  }
+
+  informationToWrite.forEach(data => {
+    fs.writeFileSync(`${resultDir}/${career}-${data.plan}.json`, JSON.stringify(data, null, 2));
+  })
+
   await browser.close();
 })();
