@@ -80,28 +80,33 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
   await page.exposeFunction('getObjetoDeInformacionDeLaMesa', getObjetoDeInformacionDeLaMesa);
   await page.exposeFunction('getInfoCompleta', getInfoCompleta);
   
-  const career = await page.evaluate(() => {
+  const careerArray = await page.evaluate(() => {
     const options = [...document.querySelectorAll('#formulario_filtro-carrera option')].map(option => {
       return {
-          innerText: option.innerText,
+          name: option.innerText,
           value: option.value
         }
     })
-    const ingSistValue = window.getIngSistValue(options);
-    return ingSistValue;
+    let filteredOptions = [];
+    options.forEach(option => {
+      if (!!option.value) {
+        filteredOptions.push(option);
+      }
+    })
+    return filteredOptions;
   })
-  await page.select('#formulario_filtro-carrera', career);
+  const career = careerArray[0];
+  await page.select('#formulario_filtro-carrera', career.value);
   await page.screenshot({path: 'screenshots/selectedCareer.png'})
   await page.exposeFunction('getPlan2011', getPlan2011);
   
   const planes = await page.evaluate(() => {
     const options = [...document.querySelectorAll('#formulario_filtro-plan option')].map(option => {
       return {
-          innerText: option.innerText,
+          name: option.innerText,
           value: option.value
         }
     })
-    // const plan2011Value = window.getPlan2011(options);
     let filteredOptions = [];
     options.forEach(option => {
       if (!!option.value) {
@@ -115,7 +120,7 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
   let informationToWrite = []
   for (const plan of planes) {
     await page.goto(URL, {waitUntil: 'networkidle0'});
-    await page.select('#formulario_filtro-carrera', career);
+    await page.select('#formulario_filtro-carrera', career.value);
     await page.waitForTimeout(1000)
     await page.select('#formulario_filtro-plan', plan.value);
     await page.screenshot({path: 'screenshots/selecterPlan.png'})
@@ -158,11 +163,11 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
 
       return await Promise.all(clusterOfSubjects);
     });
-    informationToWrite.push({plan: plan.innerText, data:data});
+    informationToWrite.push({plan: plan.name, data:data});
   }
 
   informationToWrite.forEach(data => {
-    fs.writeFileSync(`${resultDir}/${career}-${data.plan}.json`, JSON.stringify(data, null, 2));
+    fs.writeFileSync(`${resultDir}/${career.name}-${data.plan}.json`, JSON.stringify(data, null, 2));
   })
 
   await browser.close();
