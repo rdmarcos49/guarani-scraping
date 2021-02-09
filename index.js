@@ -9,10 +9,7 @@ if (!fs.existsSync(dir)){
 const resultDir = './scraping-result';
 if (!fs.existsSync(resultDir)){
     fs.mkdirSync(resultDir);
-
-const jsonDir = './scraping-result';
-if (!fs.existsSync(jsonDir)){
-    fs.mkdirSync(jsonDir);
+}
 
 function getObjetoDeInformacionDeLaMesa(cabecera, td) {
   let informacionDeLaMesa = {}
@@ -60,7 +57,7 @@ function getPlan2011(options) {
   let target = null;
   options.forEach(option => {    
     if (theInnerTextIncludesSomeOfThisWords(option.innerText, ...PLAN)) {
-      target = option.value;  
+      target = option.value;
     }
   })
   return target;
@@ -99,6 +96,8 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
     return filteredOptions;
   })
   
+
+
   let informationToWrite = []
   for (const career of careers) {
 
@@ -179,8 +178,5 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
     fs.writeFileSync(`${resultDir}/${data.career}-${data.plan}.json`, JSON.stringify(data, null, 2));
   })
 
-  console.log(data)
-  fs.writeFileSync(`${jsonDir}/${careerName}-${planName}.json`, JSON.stringify(data, null, 2)) // Dynamic saving
-  await browser.close()
+  await browser.close();
 })();
-
