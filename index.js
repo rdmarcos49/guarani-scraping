@@ -7,14 +7,24 @@ if (!fs.existsSync(dir)){
     fs.mkdirSync(dir);
 }
 
-function getObjetoDeInformacionDeLaMesa(cabecera, tr1) {
+const resultDir = './scraping-result';
+if (!fs.existsSync(resultDir)){
+    fs.mkdirSync(resultDir);
+}
+
+function getObjetoDeInformacionDeLaMesa(cabecera, td) {
   let informacionDeLaMesa = {}
   for (let i = 0; i < cabecera.length; i++) {
-    informacionDeLaMesa = {
-      ...informacionDeLaMesa,
-      [cabecera[i]]: tr1[i],
+    const key = cabecera[i];
+    const value = td[i]
+    if (key.toLowerCase() !== 'ver') {
+      informacionDeLaMesa = {
+        ...informacionDeLaMesa,
+        [key]: value,
+      }
     }
   }
+
   return informacionDeLaMesa;
 }
 
@@ -23,49 +33,9 @@ function getInfoCompleta(infoPrincipal, infoVerMas) {
     return infoCompleta;
 }
 
-function theInnerTextIncludesSomeOfThisWords(innerTextOption, ...words) {
-  const lowerCaseInnerTextOption = innerTextOption.toLowerCase();
-  const lowerCaseWords = words.map(word => word.toLowerCase());
-  for (const word of lowerCaseWords) {
-    if (lowerCaseInnerTextOption.includes(word)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function getIngSistValue(options) {
-  const CAREER_WORDS = ['ingenieria', 'ingeniería'];
-  let target = null;
-  console.log(options)
-  for (let i = 0; i < options.length; i++) {
-    const option = options[i];
-    const actualOptionText = option.innerText;
-    if (window.theInnerTextIncludesSomeOfThisWords(actualOptionText, ...CAREER_WORDS)) {
-      target = option.value;
-    }
-    console.log(target)
-  }
-  console.log(target)
-  return target;
-}
-
-function getPlan2011(options) {
-  const PLAN = ['2011'];
-  let target = null;
-  for (const option of options) {
-    const actualOptionWords = option.innerText;
-    if (theInnerTextIncludesSomeOfThisWords(actualOptionWords, ...PLAN)) {
-      target = option.value;
-    }
-  }
-  return target;
-}
-
-const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
-
-(async () => {
-  const browser = await puppeteer.launch();
+// const URL = 'https://guarani.econ.unicen.edu.ar/guarani3w/fecha_examen';
+ async function gettingData() {
+  const browser = await puppeteer.launch({headless:false});
   const page = await browser.newPage();
 
   await page.setViewport({
@@ -73,32 +43,161 @@ const URL = 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen';
     height: 1080,
   });
 
-  await page.goto(URL, {waitUntil: 'networkidle0'});
-  await page.screenshot({path: 'screenshots/initOfPage.png'})
-  await page.exposeFunction("getIngSistValue", getIngSistValue);
-  await page.exposeFunction("theInnerTextIncludesSomeOfThisWords", theInnerTextIncludesSomeOfThisWords);
-  const career = await page.evaluate(() => {
-    const options = document.querySelectorAll('#formulario_filtro-carrera option');
-    const ingSistValue = window.getIngSistValue(options);
-    return ingSistValue;
-  })
-  await page.select('#formulario_filtro-carrera', career);
-  await page.screenshot({path: 'screenshots/selectedCareer.png'})
+  await page.exposeFunction('getObjetoDeInformacionDeLaMesa', getObjetoDeInformacionDeLaMesa);
+  await page.exposeFunction('getInfoCompleta', getInfoCompleta);
 
-  /*
-  const plan = await page.evaluate(() => {
-    const options = document.querySelectorAll('#formulario_filtro-plan option');
-    const plan2011Value = getPlan2011(options);
-    return plan2011Value;
-  });
-  await page.select('#formulario_filtro-plan', plan);
-  await page.screenshot({path: 'screenshots/selecterPlan.png'})
-  await pageEvaluate(() => {
-    const button = document.getElementById('boton_buscar');
-    button.click();
-  })
-  await page.screenshot({path: 'screenshots/searchResult.png'})
-  */
+  const departamentos = [
+    {
+      name: 'Exactas',
+      url: 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen',
+    },
+    {
+      name: 'Humanas',
+      url: 'http://guaraniweb.fch.unicen.edu.ar/guarani/fecha_examen',
+    },
+    {
+      name: 'Economicas',
+      url: 'https://guarani.econ.unicen.edu.ar/guarani3w/fecha_examen',
+    },
+    {
+      name: 'Veterinarias',
+      url: 'http://serversiu.vet.unicen.edu.ar/guarani/fecha_examen',
+    },
+  ]
+
+  let informationToWrite = []
   
-})();
+  for (const departament of departamentos) {
+    const URL = departament.url;
+    await page.goto(URL, {waitUntil: 'networkidle0'});
+    
+    
+    const careers = await page.evaluate(() => {
+      const options = [...document.querySelectorAll('#formulario_filtro-carrera option')].map(option => {
+        return {
+            name: option.innerText,
+            value: option.value
+          }
+      });
 
+      let filteredOptions = [];
+
+      options.forEach(option => {
+        if (!!option.value) {
+          filteredOptions.push(option);
+        }
+      })
+      return filteredOptions;
+    });
+
+    for (const career of careers) {
+      await page.goto(URL, {waitUntil: 'networkidle0'});
+      await page.waitForSelector('#formulario_filtro-carrera')
+  
+      await page.select('#formulario_filtro-carrera', career.value);
+      await page.waitForTimeout(1000)
+      
+      const planes = await page.evaluate(() => {
+        const options = [...document.querySelectorAll('#formulario_filtro-plan option')].map(option => {
+          return {
+              name: option.innerText,
+              value: option.value
+            }
+        })
+        let filteredOptions = [];
+        options.forEach(option => {
+          if (!!option.value) {
+            filteredOptions.push(option);
+          }
+        })
+        return filteredOptions;
+      });
+  
+      for (const plan of planes) {
+        await page.goto(URL, {waitUntil: 'networkidle0'});
+        await page.select('#formulario_filtro-carrera', career.value);
+        await page.waitForTimeout(1000)
+        await page.select('#formulario_filtro-plan', plan.value);
+    
+        await page.evaluate(() => {
+          const button = document.getElementById('boton_buscar');
+          button.click();
+        });
+        
+        await page.waitForTimeout(1500);
+        const thereIsACorteElement = await page.evaluate(() => {
+          const corte = document.querySelector('.corte');
+          if (!!corte) {
+            return true;
+          }
+          return false;
+        });
+  
+        if (thereIsACorteElement) {
+          const data = await page.evaluate(async () => {
+            let clusterOfSubjects = [...document.querySelectorAll('.corte')].map( async (subject) => {
+              const subjectName = subject.querySelectorAll('.span12')[0].innerText;
+              const nodeListPrincipalHeaders = subject.querySelectorAll('table thead tr')[0];
+              const principalHeaders = [...nodeListPrincipalHeaders.querySelectorAll('th')].map(header => header.innerText);
+              const nodeListVerMasHeaders = subject.querySelectorAll('table tbody .mas_info')[0];
+              const verMasHeaders = [...nodeListVerMasHeaders.querySelectorAll('table thead tr th')].map(header => header.innerText);
+              const body = [...subject.querySelector('table tbody').childNodes];
+      
+              let mesas = []
+              for (let i = 0; i < body.length; i = i + 2) {
+                const principalData = [...body[i].querySelectorAll('td')].map(elem => {
+                  const innerHtml = elem.innerHTML
+                    .split('\t').join('')
+                    .split('\n').join('')
+                    .split(" ").filter(word => word !== "").join(" ");
+                  return innerHtml.replace(/<br>/g, " - ");
+                });
+                
+                const verMasData = [...body[i + 1].querySelector('td table tbody tr').childNodes].map(elem => {
+                  const innerHtml = elem.innerHTML
+                    .split('\t').join('')
+                    .split('\n').join('')
+                    .split(" ").filter(word => word !== "").join(" ");
+                  return innerHtml.replace(/<br>/g, " - ");
+                });
+                
+                const splittedInformation = await Promise.all([
+                  window.getObjetoDeInformacionDeLaMesa(principalHeaders, principalData),
+                  window.getObjetoDeInformacionDeLaMesa(verMasHeaders, verMasData)
+                ]);
+      
+                const unifiedInfo = await window.getInfoCompleta(splittedInformation[0], splittedInformation[1])
+      
+                mesas.push(unifiedInfo)
+              }
+              return {materia: subjectName, mesas: mesas};
+            });
+      
+            return await Promise.all(clusterOfSubjects);
+          });
+          informationToWrite.push({departament: departament.name, career: career.name, plan: plan.name, data:data});
+        } else {
+          informationToWrite.push({departament: departament.name, career: career.name, plan: plan.name, data: null})
+        }
+      }
+    }
+  }
+  
+  /*
+  informationToWrite.forEach(data => {
+    fs.writeFileSync(`${resultDir}/${data.departament}-${data.career}-${data.plan}.json`, JSON.stringify(data, null, 2));
+  })
+  */
+
+
+
+  await browser.close();
+
+  return informationToWrite;
+
+};
+
+
+module.exports = {
+  gettingData:gettingData
+}

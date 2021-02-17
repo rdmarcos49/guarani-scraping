@@ -106,3 +106,7 @@ dist
 # the folder with the dynamic screenshots
 screenshots
 screenshots/*
+
+# temporaly, the .json result
+scraping-result
+scraping-result/*

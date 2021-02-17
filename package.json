@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/rdmarcos49/guarani-scraping#readme",
   "dependencies": {
+    "mongodb": "^3.6.4",
     "puppeteer": "^5.5.0"
   }
 }
