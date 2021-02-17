@@ -34,7 +34,7 @@ function getInfoCompleta(infoPrincipal, infoVerMas) {
 }
 
 // const URL = 'https://guarani.econ.unicen.edu.ar/guarani3w/fecha_examen';
- async function gettingData() {
+async function getGuaraniesData() {
   const browser = await puppeteer.launch({headless:false});
   const page = await browser.newPage();
 
@@ -211,5 +211,5 @@ function getInfoCompleta(infoPrincipal, infoVerMas) {
 
 
 module.exports = {
-  gettingData:gettingData
+  getGuaraniesData:getGuaraniesData
 }

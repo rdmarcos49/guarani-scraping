@@ -9,7 +9,7 @@ const scraping = require('./index')
 
    async function A()
    {
-        const data = await scraping.gettingData()
+        const data = await scraping.getGuaraniesData()
         console.log(data) 
    }
    A()
