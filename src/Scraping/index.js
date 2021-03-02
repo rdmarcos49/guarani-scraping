@@ -195,11 +195,11 @@ async function getGuaraniesData() {
     }
   }
   
-  /*
+  
   informationToWrite.forEach(data => {
     fs.writeFileSync(`${resultDir}/${data.departament}-${data.career}-${data.plan}.json`, JSON.stringify(data, null, 2));
   })
-  */
+  
 
 
 
