@@ -141,13 +141,12 @@ async function getGuaraniesData() {
                   return getFormattedInnerHTML(elem.innerHTML);
                 });
                 
-                const splittedInformation = await Promise.all([
+                const [principalInfo, viewMoreInfo] = await Promise.all([
                   window.getObjetoDeInformacionDeLaMesa(principalHeaders, principalData),
                   window.getObjetoDeInformacionDeLaMesa(verMasHeaders, verMasData)
                 ]);
       
-                const unifiedInfo = await window.getInfoCompleta(splittedInformation[0], splittedInformation[1]);
-      
+                const unifiedInfo = await window.getInfoCompleta(principalInfo, viewMoreInfo);
                 mesas.push(unifiedInfo);
               }
               return {materia: subjectName, mesas: mesas};
