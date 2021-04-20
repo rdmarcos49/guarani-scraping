@@ -2,15 +2,14 @@ const puppeteer = require('puppeteer');
 const fs = require('fs');
 const departamentos = require('../constants/url');
 
-const dir = './screenshots';
-if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir);
-};
+function createDirIfNotExists(path) {
+  if (!fs.existsSync(path)) {
+    fs.mkdirSync(path);
+  }
+}
 
-const resultDir = './scraping-result';
-if (!fs.existsSync(resultDir)) {
-    fs.mkdirSync(resultDir);
-};
+createDirIfNotExists('./screenshots');
+createDirIfNotExists('./scraping-result');
 
 function getObjetoDeInformacionDeLaMesa(cabecera, td) {
   let informacionDeLaMesa = {}
