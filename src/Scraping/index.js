@@ -55,8 +55,8 @@ async function getGuaraniesData() {
   let informationToWrite = []
   
   for (const departament of DEPARTMENTS) {
-    const URL = departament.url;
-    await page.goto(URL, {waitUntil: 'networkidle0'});
+    const { url } = departament;
+    await page.goto(url, {waitUntil: 'networkidle0'});
     
     
     const careers = await page.evaluate(() => {
@@ -78,7 +78,7 @@ async function getGuaraniesData() {
     });
 
     for (const career of careers) {
-      await page.goto(URL, {waitUntil: 'networkidle0'});
+      await page.goto(url, {waitUntil: 'networkidle0'});
       await page.waitForSelector(CAREER_SELECTOR);
   
       await page.select(CAREER_SELECTOR, career.value);
@@ -101,7 +101,7 @@ async function getGuaraniesData() {
       });
   
       for (const plan of planes) {
-        await page.goto(URL, {waitUntil: 'networkidle0'});
+        await page.goto(url, {waitUntil: 'networkidle0'});
         await page.select(CAREER_SELECTOR, career.value);
         await page.waitForTimeout(1000)
         await page.select(PLAN_SELECTOR, plan.value);
