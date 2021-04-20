@@ -7,6 +7,7 @@ const {
   PLAN_SELECTOR,
   PLAN_DROPDOWN_SELECTOR,
   SEARCH_BUTTON,
+  SUBJECT,
 } = require('../constants/selectors');
 
 function createDirIfNotExists(path) {
@@ -106,17 +107,14 @@ async function getGuaraniesData() {
         await page.select(PLAN_SELECTOR, plan.value);
     
         await page.evaluate(() => {
-          const button = document.getElementById(SEARCH_BUTTON);
+          const button = document.querySelector(SEARCH_BUTTON);
           button.click();
         });
         
         await page.waitForTimeout(1500);
         const thereIsACorteElement = await page.evaluate(() => {
-          const corte = document.querySelector('.corte');
-          if (!!corte) {
-            return true;
-          }
-          return false;
+          const corte = document.querySelector(SUBJECT);
+          return !!corte;
         });
   
         if (thereIsACorteElement) {
@@ -130,7 +128,7 @@ async function getGuaraniesData() {
               return formattedInnerHTML.replace(/<br>/g, " - ");
             }
             
-            let clusterOfSubjects = [...document.querySelectorAll('.corte')].map( async (subject) => {
+            let clusterOfSubjects = [...document.querySelectorAll(SUBJECT)].map( async (subject) => {
               const subjectName = subject.querySelectorAll('.span12')[0].innerText;
               const nodeListPrincipalHeaders = subject.querySelectorAll('table thead tr')[0];
               const principalHeaders = [...nodeListPrincipalHeaders.querySelectorAll('th')].map(header => header.innerText);
