@@ -8,6 +8,7 @@ const {
   PLAN_DROPDOWN_SELECTOR,
   SEARCH_BUTTON,
   SUBJECT,
+  SUBJECT_NAME_SELECTOR,
 } = require('../constants/selectors');
 
 function createDirIfNotExists(path) {
@@ -127,13 +128,16 @@ async function getGuaraniesData() {
                 .split(" ").filter(word => word !== "").join(" ");
               return formattedInnerHTML.replace(/<br>/g, " - ");
             }
+
+            function getHeaders (subject, nodesElements, headersElements) {
+              const nodeList = subject.querySelector(nodesElements);
+              return [...nodeList.querySelectorAll(headersElements)].map(header => header.innerText);
+            }
             
             let clusterOfSubjects = [...document.querySelectorAll(SUBJECT)].map( async (subject) => {
-              const subjectName = subject.querySelectorAll('.span12')[0].innerText;
-              const nodeListPrincipalHeaders = subject.querySelectorAll('table thead tr')[0];
-              const principalHeaders = [...nodeListPrincipalHeaders.querySelectorAll('th')].map(header => header.innerText);
-              const nodeListVerMasHeaders = subject.querySelectorAll('table tbody .mas_info')[0];
-              const verMasHeaders = [...nodeListVerMasHeaders.querySelectorAll('table thead tr th')].map(header => header.innerText);
+              const subjectName = subject.querySelector(SUBJECT_NAME_SELECTOR).innerText;
+              const principalHeaders = getHeaders(subject, 'table thead tr', 'th');
+              const verMasHeaders = getHeaders(subject, 'table tbody .mas_info', 'table thead tr th');
               const body = [...subject.querySelector('table tbody').childNodes];
       
               let mesas = []

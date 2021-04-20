@@ -4,6 +4,7 @@ const CAREER_DROPDOWN_SELECTOR = '#formulario_filtro-carrera option';
 const PLAN_DROPDOWN_SELECTOR = '#formulario_filtro-plan option';
 const SEARCH_BUTTON = '#boton_buscar';
 const SUBJECT = '.corte';
+const SUBJECT_NAME_SELECTOR = '.span12';
 
 module.exports = {
   CAREER_SELECTOR,
@@ -12,4 +13,5 @@ module.exports = {
   PLAN_DROPDOWN_SELECTOR,
   SEARCH_BUTTON,
   SUBJECT,
+  SUBJECT_NAME_SELECTOR,
 }
