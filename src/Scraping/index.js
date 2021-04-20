@@ -1,39 +1,37 @@
-
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 
 const dir = './screenshots';
-if (!fs.existsSync(dir)){
+if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir);
-}
+};
 
 const resultDir = './scraping-result';
-if (!fs.existsSync(resultDir)){
+if (!fs.existsSync(resultDir)) {
     fs.mkdirSync(resultDir);
-}
+};
 
 function getObjetoDeInformacionDeLaMesa(cabecera, td) {
   let informacionDeLaMesa = {}
   for (let i = 0; i < cabecera.length; i++) {
     const key = cabecera[i];
-    const value = td[i]
+    const value = td[i];
     if (key.toLowerCase() !== 'ver') {
       informacionDeLaMesa = {
         ...informacionDeLaMesa,
         [key]: value,
       }
     }
-  }
+  };
 
   return informacionDeLaMesa;
 }
 
 function getInfoCompleta(infoPrincipal, infoVerMas) {
-    const infoCompleta = {...infoVerMas, ...infoPrincipal};
-    return infoCompleta;
+  const infoCompleta = {...infoVerMas, ...infoPrincipal};
+  return infoCompleta;
 }
 
-// const URL = 'https://guarani.econ.unicen.edu.ar/guarani3w/fecha_examen';
 async function getGuaraniesData() {
   const browser = await puppeteer.launch({headless:false});
   const page = await browser.newPage();
@@ -75,7 +73,7 @@ async function getGuaraniesData() {
       name: 'Salud',
       url: 'http://guarani.salud.unicen.edu.ar/guarani/fecha_examen',
     },
-  ]
+  ];
 
   let informationToWrite = []
   
@@ -104,10 +102,10 @@ async function getGuaraniesData() {
 
     for (const career of careers) {
       await page.goto(URL, {waitUntil: 'networkidle0'});
-      await page.waitForSelector('#formulario_filtro-carrera')
+      await page.waitForSelector('#formulario_filtro-carrera');
   
       await page.select('#formulario_filtro-carrera', career.value);
-      await page.waitForTimeout(1000)
+      await page.waitForTimeout(1000);
       
       const planes = await page.evaluate(() => {
         const options = [...document.querySelectorAll('#formulario_filtro-plan option')].map(option => {
@@ -115,7 +113,7 @@ async function getGuaraniesData() {
               name: option.innerText,
               value: option.value
             }
-        })
+        });
         let filteredOptions = [];
         options.forEach(option => {
           if (!!option.value) {
@@ -178,9 +176,9 @@ async function getGuaraniesData() {
                   window.getObjetoDeInformacionDeLaMesa(verMasHeaders, verMasData)
                 ]);
       
-                const unifiedInfo = await window.getInfoCompleta(splittedInformation[0], splittedInformation[1])
+                const unifiedInfo = await window.getInfoCompleta(splittedInformation[0], splittedInformation[1]);
       
-                mesas.push(unifiedInfo)
+                mesas.push(unifiedInfo);
               }
               return {materia: subjectName, mesas: mesas};
             });
@@ -189,24 +187,20 @@ async function getGuaraniesData() {
           });
           informationToWrite.push({departament: departament.name, career: career.name, plan: plan.name, data:data});
         } else {
-          informationToWrite.push({departament: departament.name, career: career.name, plan: plan.name, data: null})
+          informationToWrite.push({departament: departament.name, career: career.name, plan: plan.name, data: null});
         }
       }
     }
   }
   
-  
   informationToWrite.forEach(data => {
-    fs.writeFileSync(`${resultDir}/${data.departament}-${data.career}-${data.plan}.json`, JSON.stringify(data, null, 2));
-  })
+    const path = `${resultDir}/${data.departament}-${data.career}-${data.plan}.json`;
+    fs.writeFileSync(path, JSON.stringify(data, null, 2));
+  });
   
-
-
-
   await browser.close();
 
   return informationToWrite;
-
 };
 
 
