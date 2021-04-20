@@ -129,9 +129,9 @@ async function getGuaraniesData() {
               return formattedInnerHTML.replace(/<br>/g, " - ");
             }
 
-            function getHeaders (subject, nodesElements, headersElements) {
-              const nodeList = subject.querySelector(nodesElements);
-              return [...nodeList.querySelectorAll(headersElements)].map(header => header.innerText);
+            function getHeaders (subject, nodeSelectors, headerSelectors) {
+              const nodeList = subject.querySelector(nodeSelectors);
+              return [...nodeList.querySelectorAll(headerSelectors)].map(header => header.innerText);
             }
             
             let clusterOfSubjects = [...document.querySelectorAll(SUBJECT)].map( async (subject) => {
