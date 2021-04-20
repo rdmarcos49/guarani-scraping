@@ -175,5 +175,5 @@ async function getGuaraniesData() {
 
 
 module.exports = {
-  getGuaraniesData:getGuaraniesData
+  getGuaraniesData,
 }
