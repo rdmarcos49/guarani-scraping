@@ -114,6 +114,15 @@ async function getGuaraniesData() {
   
         if (thereIsACorteElement) {
           const data = await page.evaluate(async () => {
+
+            function getFormattedInnerHTML (innerHTML) {
+              const formattedInnerHTML = innerHTML
+                .split('\t').join('')
+                .split('\n').join('')
+                .split(" ").filter(word => word !== "").join(" ");
+              return formattedInnerHTML.replace(/<br>/g, " - ");
+            }
+            
             let clusterOfSubjects = [...document.querySelectorAll('.corte')].map( async (subject) => {
               const subjectName = subject.querySelectorAll('.span12')[0].innerText;
               const nodeListPrincipalHeaders = subject.querySelectorAll('table thead tr')[0];
@@ -125,19 +134,11 @@ async function getGuaraniesData() {
               let mesas = []
               for (let i = 0; i < body.length; i = i + 2) {
                 const principalData = [...body[i].querySelectorAll('td')].map(elem => {
-                  const innerHtml = elem.innerHTML
-                    .split('\t').join('')
-                    .split('\n').join('')
-                    .split(" ").filter(word => word !== "").join(" ");
-                  return innerHtml.replace(/<br>/g, " - ");
+                  return getFormattedInnerHTML(elem.innerHTML);
                 });
                 
                 const verMasData = [...body[i + 1].querySelector('td table tbody tr').childNodes].map(elem => {
-                  const innerHtml = elem.innerHTML
-                    .split('\t').join('')
-                    .split('\n').join('')
-                    .split(" ").filter(word => word !== "").join(" ");
-                  return innerHtml.replace(/<br>/g, " - ");
+                  return getFormattedInnerHTML(elem.innerHTML);
                 });
                 
                 const splittedInformation = await Promise.all([
