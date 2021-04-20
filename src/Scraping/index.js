@@ -1,6 +1,13 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
-const departamentos = require('../constants/url');
+const { DEPARTMENTS } = require('../constants/url');
+const {
+  CAREER_SELECTOR,
+  CAREER_DROPDOWN_SELECTOR,
+  PLAN_SELECTOR,
+  PLAN_DROPDOWN_SELECTOR,
+  SEARCH_BUTTON,
+} = require('../constants/selectors');
 
 function createDirIfNotExists(path) {
   if (!fs.existsSync(path)) {
@@ -46,13 +53,13 @@ async function getGuaraniesData() {
 
   let informationToWrite = []
   
-  for (const departament of departamentos) {
+  for (const departament of DEPARTMENTS) {
     const URL = departament.url;
     await page.goto(URL, {waitUntil: 'networkidle0'});
     
     
     const careers = await page.evaluate(() => {
-      const options = [...document.querySelectorAll('#formulario_filtro-carrera option')].map(option => {
+      const options = [...document.querySelectorAll(CAREER_DROPDOWN_SELECTOR)].map(option => {
         return {
             name: option.innerText,
             value: option.value
@@ -71,13 +78,13 @@ async function getGuaraniesData() {
 
     for (const career of careers) {
       await page.goto(URL, {waitUntil: 'networkidle0'});
-      await page.waitForSelector('#formulario_filtro-carrera');
+      await page.waitForSelector(CAREER_SELECTOR);
   
-      await page.select('#formulario_filtro-carrera', career.value);
+      await page.select(CAREER_SELECTOR, career.value);
       await page.waitForTimeout(1000);
       
       const planes = await page.evaluate(() => {
-        const options = [...document.querySelectorAll('#formulario_filtro-plan option')].map(option => {
+        const options = [...document.querySelectorAll(PLAN_DROPDOWN_SELECTOR)].map(option => {
           return {
               name: option.innerText,
               value: option.value
@@ -94,12 +101,12 @@ async function getGuaraniesData() {
   
       for (const plan of planes) {
         await page.goto(URL, {waitUntil: 'networkidle0'});
-        await page.select('#formulario_filtro-carrera', career.value);
+        await page.select(CAREER_SELECTOR, career.value);
         await page.waitForTimeout(1000)
-        await page.select('#formulario_filtro-plan', plan.value);
+        await page.select(PLAN_SELECTOR, plan.value);
     
         await page.evaluate(() => {
-          const button = document.getElementById('boton_buscar');
+          const button = document.getElementById(SEARCH_BUTTON);
           button.click();
         });
         

@@ -1,4 +1,4 @@
-const departamentos = [
+const DEPARTAMENTS = [
   {
     name: 'Exactas',
     url: 'https://g3w.exa.unicen.edu.ar/guarani3w/fecha_examen',
@@ -30,5 +30,5 @@ const departamentos = [
 ];
 
 module.exports = {
-  departamentos,
+  DEPARTMENTS,
 }
