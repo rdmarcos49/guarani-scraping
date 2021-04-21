@@ -37,12 +37,12 @@ function getObjetoDeInformacionDeLaMesa(cabecera, td) {
 }
 
 function getInfoCompleta(infoPrincipal, infoVerMas) {
-  const infoCompleta = {...infoVerMas, ...infoPrincipal};
+  const infoCompleta = { ...infoVerMas, ...infoPrincipal };
   return infoCompleta;
 }
 
 async function getGuaraniesData() {
-  const browser = await puppeteer.launch({headless:false});
+  const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
 
   await page.setViewport({
@@ -79,7 +79,7 @@ async function getGuaraniesData() {
     });
 
     for (const career of careers) {
-      await page.goto(url, {waitUntil: 'networkidle0'});
+      await page.goto(url, { waitUntil: 'networkidle0' });
       await page.waitForSelector(CAREER_SELECTOR);
   
       await page.select(CAREER_SELECTOR, career.value);
@@ -102,7 +102,7 @@ async function getGuaraniesData() {
       });
   
       for (const plan of planes) {
-        await page.goto(url, {waitUntil: 'networkidle0'});
+        await page.goto(url, { waitUntil: 'networkidle0' });
         await page.select(CAREER_SELECTOR, career.value);
         await page.waitForTimeout(1000)
         await page.select(PLAN_SELECTOR, plan.value);
@@ -118,8 +118,9 @@ async function getGuaraniesData() {
           return !!corte;
         });
   
+        let data = null;
         if (thereIsACorteElement) {
-          const data = await page.evaluate(async () => {
+          data = await page.evaluate(async () => {
 
             function getFormattedInnerHTML (innerHTML) {
               const formattedInnerHTML = innerHTML
@@ -158,18 +159,21 @@ async function getGuaraniesData() {
                 const unifiedInfo = await window.getInfoCompleta(principalInfo, viewMoreInfo);
                 mesas.push(unifiedInfo);
               }
-              return {materia: subjectName, mesas: mesas};
+              return { materia: subjectName, mesas: mesas };
             });
       
             return await Promise.all(clusterOfSubjects);
           });
-          informationToWrite.push({departament: departament.name, career: career.name, plan: plan.name, data:data});
-        } else {
-          informationToWrite.push({departament: departament.name, career: career.name, plan: plan.name, data: null});
-        }
-      }
-    }
-  }
+        };
+        informationToWrite.push({
+          departament: departament.name,
+          career: career.name,
+          plan: plan.name, 
+          data: data,
+        });
+      };
+    };
+  };
   
   informationToWrite.forEach(data => {
     const path = `${resultDir}/${data.departament}-${data.career}-${data.plan}.json`;
